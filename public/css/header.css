@@ -1,0 +1,31 @@
+.logo {
+  display: flex;
+  align-items: center; /* Canh giữa theo chiều dọc */
+}
+
+.logo__link {
+  display: flex;
+  align-items: center;
+  text-decoration: none; /* Xóa gạch chân của link */
+}
+
+.logo__image {
+  height: 53px; /* Đặt chiều cao cố định cho logo */
+  width: auto; /* Giữ tỉ lệ */
+  margin-right: 10px; /* Khoảng cách giữa logo và chữ */
+}
+
+.logo__text {
+  display: flex;
+  flex-direction: column;
+  font-size: 18px;
+  font-weight: 400;
+  color: #333;
+  line-height: 1.1; /* Giảm khoảng cách giữa các dòng */
+}
+
+.logo__subtitle {
+  font-size: 14px;
+  color: #777;
+  margin-top: -1px; /* Thu hẹp khoảng cách thủ công */
+}

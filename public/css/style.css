@@ -1,0 +1,65 @@
+/* Căn giữa nội dung */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* Dàn ngang sản phẩm với Flexbox */
+.product-grid {
+    display: flex;
+    flex-wrap: wrap; /* Tự động xuống dòng khi không đủ chỗ */
+    margin-bottom: 15px;
+    gap: 20px; /* Khoảng cách giữa các sản phẩm */
+}
+
+/* Tạo box sản phẩm */
+.product-card {
+    width: calc(25% - 15px); /* Chia thành 4 phần, trừ đi khoảng cách */
+    min-width: 200px; /* Đảm bảo không quá nhỏ */
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease-in-out;
+}
+
+/* Hover hiệu ứng */
+.product-card:hover {
+    transform: scale(1.05);
+}
+
+/* Style cho nút */
+.btn {
+    display: inline-block;
+    padding: 8px 12px;
+    margin-top: 8px;
+    text-decoration: none;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-danger {
+    background: #dc3545;
+}
+
+.btn:hover {
+    opacity: 0.8;
+}
+/* Responsive: 2 sản phẩm mỗi hàng trên màn hình nhỏ */
+@media (max-width: 992px) {
+    .product-card {
+        width: calc(50% - 10px); /* 2 cột mỗi hàng */
+    }
+}
+
+/* Responsive: 1 sản phẩm mỗi hàng trên điện thoại */
+@media (max-width: 600px) {
+    .product-card {
+        width: 100%; /* 1 sản phẩm mỗi hàng */
+    }
+}
