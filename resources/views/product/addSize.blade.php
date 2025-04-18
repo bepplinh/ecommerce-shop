@@ -85,13 +85,21 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="editName{{ $size->id }}">Size:</label>
-                            <input type="text" class="form-control" id="editName{{ $size->id }}" name="name"
-                                value="{{ $size->name }}" required>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                id="editName{{ $size->id }}" 
+                                name="name" 
+                                value="{{ old('name', $size->name) }}" 
+                                required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save changes
+                        </button>
                     </div>
                 </form>
             </div>
@@ -99,4 +107,14 @@
     </div>
     @endforeach
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all modals
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            new bootstrap.Modal(modal);
+        });
+    });
+</script>
 @endsection

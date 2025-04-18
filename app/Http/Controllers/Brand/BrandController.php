@@ -21,7 +21,10 @@ class BrandController extends Controller
 
     public function create()
     {
-        return view('brand.addBrand');
+        return view('brand.addBrand')->with([
+            'title' => 'Create Brand',
+            'heading' => 'Add New Brand',
+        ]);
     }
 
     public function store(Request $request)

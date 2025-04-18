@@ -9,6 +9,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\UpdateProductRequest;
 
 class ProductController extends Controller
 {
@@ -17,12 +18,38 @@ class ProductController extends Controller
 
         $query = Product::query();
 
+        // Search functionality
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%");
             });
+        }
+
+        // Sorting functionality
+        switch ($request->sort) {
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            default:
+                $query->latest();
+                break;
         }
 
         $products = $query->paginate(10)->withQueryString();
@@ -54,26 +81,23 @@ class ProductController extends Controller
             'code' => ['required', 'string', 'max:50', 'unique:products,code'],
             'description' => ['required', 'string', 'max:255'],
             'price' => ['required', 'string'],
-            'stock' => ['required', 'integer'],
-            'size_id' => ['required', 'exists:sizes,id'],
             'status' => ['required', 'in:active,inactive'],
             'category_id' => ['required', 'exists:categories,id'],
             'brand_id' => ['required', 'exists:brands,id'],
             'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'sizes' => ['required', 'array'],
+            'sizes.*.size_id' => ['required', 'exists:sizes,id'],
+            'sizes.*.stock' => ['required', 'integer', 'min:0'],
         ]);
 
         $product = new Product;
-
         $product->name = $request->name;
         $product->code = $request->code;
         $product->description = $request->description;
-        $product->price = (int) str_replace('.', '', str_replace(',', '', $request->price));
-        $product->stock = $request->stock;
-        $product->size_id = $request->size_id;
+        $product->price = (int) str_replace(['.', ','], '', $request->price);
         $product->status = $request->status;
         $product->category_id = $request->category_id;
         $product->brand_id = $request->brand_id;
-
 
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('products', 'public');
@@ -82,12 +106,16 @@ class ProductController extends Controller
 
         $product->save();
 
+        // Gán các size và số lượng
+        foreach ($request->sizes as $size) {
+            $product->sizes()->attach($size['size_id'], ['stock' => $size['stock']]);
+        }
+
         return redirect()->route('products.create')->with('toastr', [
             'status' => 'success',
             'message' => 'Create Product Successfully!',
         ]);
     }
-
 
 
     public function show($id)
@@ -117,28 +145,11 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateProductRequest $request, $id)
     {
         $product = Product::findOrFail($id);
 
-        $request->merge([
-            'price' => str_replace([',', '.'], '', $request->price)
-        ]);
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:products,code,' . $id,
-            'price' => 'required|numeric|min:0',
-            'size_id' => 'required|exists:sizes,id',
-            'description' => 'nullable|string',
-            'stock' => 'required|integer|min:0',
-            'status' => 'required|in:active,inactive',
-            'category_id' => 'required|exists:categories,id',
-            'brand_id' => 'required|exists:brands,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
-
-        $data = $request->except('image');
+        $data = $request->except(['image', 'sizes']);
 
         if ($request->hasFile('image')) {
             if ($product->image) {
@@ -152,12 +163,23 @@ class ProductController extends Controller
 
         $product->update($data);
 
+        // Xử lý cập nhật size và stock
+        $sizes = $request->input('sizes', []);
+        $syncData = [];
+
+        foreach ($sizes as $size) {
+            if (isset($size['id']) && isset($size['stock'])) {
+                $syncData[$size['id']] = ['stock' => $size['stock']];
+            }
+        }
+
+        $product->sizes()->sync($syncData);
+
         return redirect()->route('products.index')->with('toastr', [
             'status' => 'success',
             'message' => 'Product updated successfully',
         ]);
     }
-
 
     public function destroy(Product $product)
     {

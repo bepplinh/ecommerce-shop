@@ -3,15 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Product extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'name',
         'code',
         'description',
         'price',
-        'stock',
         'category_id',
         'brand_id',
         'image',
@@ -28,8 +29,8 @@ class Product extends Model
         return $this->belongsTo(Brand::class);
     }
     
-    public function size()
+    public function sizes()
     {
-        return $this->belongsTo(Size::class);
+        return $this->belongsToMany(Size::class)->withPivot('stock')->withTimestamps();
     }
 }

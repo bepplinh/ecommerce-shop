@@ -27,23 +27,55 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="size" class="form-label">Size</label>
-                        <select class="form-select @error('size_id') is-invalid @enderror" name="size_id" id="size_id" required>
-                            <option value="">-- Chọn size --</option>
-                            @foreach($sizes as $size)
-                                <option value="{{ $size->id }}" {{ old('size_id') == $size->id ? 'selected' : '' }}>
-                                    {{ $size->name }}
-                                </option>
+                {{-- Size và số lượng --}}
+                <div class="mb-3">
+                    <label class="form-label">Size và số lượng</label>
+                    <div id="size-stock-list">
+                        @if(old('sizes'))
+                            @foreach(old('sizes') as $i => $size)
+                                <div class="row mb-2 align-items-end size-stock-item">
+                                    <div class="col-md-5">
+                                        <select name="sizes[{{ $i }}][size_id]" class="form-select" required>
+                                            <option value="">-- Chọn size --</option>
+                                            @foreach($sizes as $s)
+                                                <option value="{{ $s->id }}" {{ $size['size_id'] == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="number" name="sizes[{{ $i }}][stock]" class="form-control" placeholder="Số lượng" value="{{ $size['stock'] }}" required>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button type="button" class="btn btn-danger btn-remove-size"><i class="fas fa-trash-alt"></i></button>
+                                    </div>
+                                </div>
                             @endforeach
-                        </select>
-                        
-                        @error('size')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        @else
+                            <div class="row mb-2 align-items-end size-stock-item">
+                                <div class="col-md-5">
+                                    <select name="sizes[0][size_id]" class="form-select" required>
+                                        <option value="">-- Chọn size --</option>
+                                        @foreach($sizes as $size)
+                                            <option value="{{ $size->id }}">{{ $size->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <input type="number" name="sizes[0][stock]" class="form-control" placeholder="Số lượng" required>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button type="button" class="btn btn-danger btn-remove-size"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
+                    <button type="button" class="btn btn-outline-primary" id="btn-add-size">
+                        <i class="fas fa-plus-circle me-1"></i> Thêm size
+                    </button>
+                </div>
+
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="price" class="form-label">Giá</label>
                         <div class="input-group">
@@ -53,6 +85,17 @@
                         </div>
                         @error('price')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Trạng thái</label>
+                        <select class="form-select @error('status') is-invalid @enderror" name="status" id="status">
+                            <option value="active" {{ old('status')=='active' ? 'selected' : '' }}>Hoạt động</option>
+                            <option value="inactive" {{ old('status')=='inactive' ? 'selected' : '' }}>Không hoạt động</option>
+                        </select>
+                        @error('status')
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
@@ -68,37 +111,12 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="stock" class="form-label">Số lượng</label>
-                        <input type="number" class="form-control @error('stock') is-invalid @enderror" name="stock"
-                            id="stock" value="{{ old('stock') }}" required>
-                        @error('stock')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="status" class="form-label">Trạng thái</label>
-                        <select class="form-select @error('status') is-invalid @enderror" name="status" id="status">
-                            <option value="active" {{ old('status')=='active' ? 'selected' : '' }}>Hoạt động</option>
-                            <option value="inactive" {{ old('status')=='inactive' ? 'selected' : '' }}>Không hoạt động
-                            </option>
-                        </select>
-                        @error('status')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
                         <label for="category_id" class="form-label">Danh mục</label>
                         <select class="form-select select2-custom @error('category_id') is-invalid @enderror"
                             name="category_id" id="category_id" required>
                             <option value="">-- Chọn danh mục --</option>
                             @foreach ($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id')==$category->id ? 'selected' : ''
-                                }}>
+                            <option value="{{ $category->id }}" {{ old('category_id')==$category->id ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
                             @endforeach
@@ -156,62 +174,78 @@
 
 <script>
     function confirmCancel(event) {
-        event.preventDefault(); 
+        event.preventDefault();
         if (confirm('Bạn có chắc chắn muốn hủy?')) {
             window.location.href = event.currentTarget.href;
         }
     }
-</script>
 
-<script>
     const priceInput = document.getElementById('price');
-
     priceInput.addEventListener('input', function (e) {
-        // Lưu vị trí con trỏ
-        const cursorPosition = this.selectionStart;
-
-        // Xóa tất cả ký tự không phải số
-        let rawValue = this.value.replace(/\D/g, '');
-
-        // Định dạng lại thành chuỗi có dấu chấm
+        const rawValue = this.value.replace(/\D/g, '');
         this.value = Number(rawValue).toLocaleString('vi-VN');
-
-        // Cập nhật lại vị trí con trỏ nếu cần
         this.setSelectionRange(this.value.length, this.value.length);
     });
-</script>
 
-<script>
-    $(document).ready(function() {
-        // Existing Select2 initialization code...
-    });
-    
     function previewImage(input) {
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
-        
+
         if (input.files && input.files[0]) {
             const reader = new FileReader();
-            
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 preview.src = e.target.result;
                 container.style.display = 'inline-block';
-            }
-            
+            };
             reader.readAsDataURL(input.files[0]);
         } else {
             clearImage();
         }
     }
-    
+
     function clearImage() {
         const input = document.getElementById('image');
         const preview = document.getElementById('imagePreview');
         const container = document.getElementById('imagePreviewContainer');
-        
+
         input.value = '';
         preview.src = '#';
         container.style.display = 'none';
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        let index = {{ old('sizes') ? count(old('sizes')) : 1 }};
+
+        document.getElementById('btn-add-size').addEventListener('click', function () {
+            const container = document.getElementById('size-stock-list');
+
+            const newItem = document.createElement('div');
+            newItem.classList.add('row', 'mb-2', 'align-items-end', 'size-stock-item');
+            newItem.innerHTML = `
+                <div class="col-md-5">
+                    <select name="sizes[${index}][size_id]" class="form-select" required>
+                        <option value="">-- Chọn size --</option>
+                        @foreach($sizes as $size)
+                            <option value="{{ $size->id }}">{{ $size->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="number" name="sizes[${index}][stock]" class="form-control" placeholder="Số lượng" required>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="button" class="btn btn-danger btn-remove-size"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            `;
+            container.appendChild(newItem);
+            index++;
+        });
+
+        document.getElementById('size-stock-list').addEventListener('click', function (e) {
+            if (e.target.closest('.btn-remove-size')) {
+                e.target.closest('.size-stock-item').remove();
+            }
+        });
+    });
 </script>
 @endsection

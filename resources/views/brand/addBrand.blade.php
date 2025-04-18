@@ -4,17 +4,15 @@
     <div class="row justify-content-center">
         <div class="col-md-10">
             <div class="card">
-                <div class="card-header">Add New Brand</div>
-
                 <div class="card-body">
                     @if ($errors->any())
-                        <div class="alert alert-danger">
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                     @endif
 
                     <form method="POST" action="{{ route('brands.store') }}" enctype="multipart/form-data">
@@ -25,14 +23,13 @@
                         <div class="form-group row mb-3">
                             <label for="name" class="col-md-4 col-form-label text-md-right">Brand Name</label>
                             <div class="col-md-6">
-                                <input id="name" type="text"
-                                       class="form-control @error('name') is-invalid @enderror"
-                                       name="name" value="{{ old('name') }}" required autofocus>
+                                <input id="name" type="text" class="form-control @error('name') is-invalid @enderror"
+                                    name="name" value="{{ old('name') }}" required autofocus>
 
                                 @error('name')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
                                 @enderror
                             </div>
                         </div>
@@ -42,13 +39,13 @@
                             <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
                             <div class="col-md-6">
                                 <textarea id="description"
-                                          class="form-control @error('description') is-invalid @enderror"
-                                          name="description" rows="4">{{ old('description') }}</textarea>
+                                    class="form-control @error('description') is-invalid @enderror" name="description"
+                                    rows="4">{{ old('description') }}</textarea>
 
                                 @error('description')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
                                 @enderror
                             </div>
                         </div>
@@ -58,19 +55,19 @@
                             <label for="image" class="col-md-4 col-form-label text-md-right">Brand Image</label>
                             <div class="col-md-6">
                                 <input type="file" name="image" id="image"
-                                       class="form-control @error('image') is-invalid @enderror"
-                                       accept="image/*" onchange="previewImage(event)">
-                        
+                                    class="form-control @error('image') is-invalid @enderror" accept="image/*"
+                                    onchange="previewImage(event)">
+
                                 @error('image')
-                                    <span class="invalid-feedback d-block mt-1" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
+                                <span class="invalid-feedback d-block mt-1" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
                                 @enderror
-                        
+
                                 <!-- Preview Area: now below the input -->
                                 <div class="mt-3">
                                     <img id="imagePreview" src="#" alt="Logo Brand"
-                                         style="max-width: 100%; height: auto; display: none; border-radius: 8px; border: 1px solid #ddd;">
+                                        style="max-width: 100%; height: auto; display: none; border-radius: 8px; border: 1px solid #ddd;">
                                 </div>
                             </div>
                         </div>

@@ -40,8 +40,6 @@ class ProductSeeder extends Seeder
                 'code' => strtoupper(Str::random(8)),
                 'description' => $faker->sentence,
                 'price' => rand(100000, 2000000),
-                'size_id' => $randomSize->id, // Sử dụng id của size ngẫu nhiên từ bảng sizes
-                'stock' => rand(10, 100),
                 'category_id' => $product['category_id'],
                 'brand_id' => $product['brand_id'],
                 'status' => collect(['active', 'inactive'])->random(),
