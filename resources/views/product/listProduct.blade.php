@@ -1,6 +1,6 @@
 @extends('layout.adminDashboard')
 @section('content')
-<div class="container mt-4">
+<div class="container-fluid mt-4">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center text-center">
             <h5 class="mb-0">Danh sách sản phẩm</h5>
