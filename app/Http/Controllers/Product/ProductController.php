@@ -6,6 +6,8 @@ use App\Models\Size;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Category;
+use Illuminate\Support\Str;
+use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
@@ -52,7 +54,7 @@ class ProductController extends Controller
                 break;
         }
 
-        $products = $query->paginate(10)->withQueryString();
+        $products = $query->with('mainImage')->paginate(10)->withQueryString();
         return view('product.listProduct')->with([
             'products' => $products,
             'title' => 'Product List',
@@ -84,7 +86,8 @@ class ProductController extends Controller
             'status' => ['required', 'in:active,inactive'],
             'category_id' => ['required', 'exists:categories,id'],
             'brand_id' => ['required', 'exists:brands,id'],
-            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'images' => ['required', 'array'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'sizes' => ['required', 'array'],
             'sizes.*.size_id' => ['required', 'exists:sizes,id'],
             'sizes.*.stock' => ['required', 'integer', 'min:0'],
@@ -98,15 +101,24 @@ class ProductController extends Controller
         $product->status = $request->status;
         $product->category_id = $request->category_id;
         $product->brand_id = $request->brand_id;
-
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('products', 'public');
-            $product->image = 'storage/' . $imagePath;
-        }
-
         $product->save();
 
-        // Gán các size và số lượng
+        $slug = Str::slug($product->name);
+
+        if ($request->hasFile('images')) {
+            $images = $request->file('images');
+            foreach ($images as $index => $image) {
+                $extension = $image->getClientOriginalExtension();
+                $imageName = "{$slug}-" . ($index + 1) . "." . $extension;
+                $imagePath = $image->storeAs("products/{$slug}", $imageName, 'public');
+
+                $product->images()->create([
+                    'image_path' => 'storage/' . $imagePath,
+                    'is_main' => $index === 0, //ảnh đầu tiên là ảnh đại diện
+                ]);
+            }
+        }
+
         foreach ($request->sizes as $size) {
             $product->sizes()->attach($size['size_id'], ['stock' => $size['stock']]);
         }
@@ -121,7 +133,7 @@ class ProductController extends Controller
     public function show($id)
     {
         $product = Product::findOrFail($id);
-        return view('product.showProduct')->with([
+        return view('client.detail')->with([
             'product' => $product,
             'title' => 'Product Details',
             'heading' => 'Product Details',
@@ -146,40 +158,101 @@ class ProductController extends Controller
     }
 
     public function update(UpdateProductRequest $request, $id)
-    {
-        $product = Product::findOrFail($id);
+{
+    $product = Product::findOrFail($id);
 
-        $data = $request->except(['image', 'sizes']);
+    // Lấy dữ liệu không liên quan đến ảnh
+    $data = $request->except(['images', 'sizes', 'replace_images', 'deleted_images', 'main_image_id']);
 
-        if ($request->hasFile('image')) {
-            if ($product->image) {
-                $oldImagePath = str_replace('storage/', '', $product->image);
-                Storage::disk('public')->delete($oldImagePath);
+    // Xử lý ảnh thay thế
+    if ($request->has('replace_images')) {
+        foreach ($request->replace_images as $imageId => $newImage) {
+            $productImage = ProductImage::findOrFail($imageId);
+
+            // Nếu ảnh cũ là ảnh chính thì gán cờ để sau xử lý
+            $wasMain = $productImage->is_main;
+
+            // Xóa ảnh cũ nếu tồn tại
+            $oldImagePath = public_path('storage/' . $productImage->image_path);
+            if (file_exists($oldImagePath)) {
+                unlink($oldImagePath);
             }
 
-            $imagePath = $request->file('image')->store('products', 'public');
-            $data['image'] = 'storage/' . $imagePath;
+            // Xóa ảnh trong DB
+            $productImage->delete();
+
+            // Upload ảnh mới thay thế
+            $extension = $newImage->getClientOriginalExtension();
+            $imageName = Str::slug($product->name) . '-' . uniqid() . '.' . $extension;
+            $imagePath = $newImage->storeAs('products/' . Str::slug($product->name), $imageName, 'public');
+
+            // Lưu ảnh mới vào DB
+            $product->images()->create([
+                'image_path' => 'storage/' . $imagePath,
+                'is_main' => $wasMain, // Nếu ảnh cũ là ảnh chính, thì ảnh mới cũng là ảnh chính
+            ]);
         }
-
-        $product->update($data);
-
-        // Xử lý cập nhật size và stock
-        $sizes = $request->input('sizes', []);
-        $syncData = [];
-
-        foreach ($sizes as $size) {
-            if (isset($size['id']) && isset($size['stock'])) {
-                $syncData[$size['id']] = ['stock' => $size['stock']];
-            }
-        }
-
-        $product->sizes()->sync($syncData);
-
-        return redirect()->route('products.index')->with('toastr', [
-            'status' => 'success',
-            'message' => 'Product updated successfully',
-        ]);
     }
+
+    // Xử lý ảnh đã xóa
+    if ($request->has('deleted_images')) {
+        $deletedImageIds = array_filter(explode(',', $request->deleted_images));
+        if (!empty($deletedImageIds)) {
+            $deletedImages = ProductImage::whereIn('id', $deletedImageIds)->get();
+            foreach ($deletedImages as $deletedImage) {
+                $oldImagePath = public_path('storage/' . $deletedImage->image_path);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+                $deletedImage->delete();
+            }
+        }
+    }
+
+    // Xử lý ảnh mới
+    if ($request->hasFile('images')) {
+        foreach ($request->file('images') as $index => $image) {
+            $extension = $image->getClientOriginalExtension();
+            $imageName = Str::slug($product->name) . '-' . uniqid() . '.' . $extension;
+            $imagePath = $image->storeAs('products/' . Str::slug($product->name), $imageName, 'public');
+        
+            // Lưu tất cả các ảnh vào database
+            $product->images()->create([
+                'image_path' => 'storage/' . $imagePath,
+                'is_main' => false, // Tạm thời là false, ảnh chính xử lý sau
+            ]);
+        }
+    }
+
+    // Cập nhật ảnh chính (main_image_id)
+    if ($request->filled('main_image_id')) {
+        $mainImageId = $request->input('main_image_id');
+
+        // Đảm bảo tất cả ảnh của sản phẩm có is_main = false
+        $product->images()->update(['is_main' => false]);
+
+        // Đặt ảnh được chọn là ảnh chính
+        ProductImage::where('id', $mainImageId)->update(['is_main' => true]);
+    }
+
+    // Cập nhật thông tin sản phẩm
+    $product->update($data);
+
+    // Cập nhật size và tồn kho
+    $sizes = $request->input('sizes', []);
+    $syncData = [];
+    foreach ($sizes as $size) {
+        if (isset($size['id']) && isset($size['stock'])) {
+            $syncData[$size['id']] = ['stock' => $size['stock']];
+        }
+    }
+    $product->sizes()->sync($syncData);
+
+    return redirect()->route('products.index')->with('toastr', [
+        'status' => 'success',
+        'message' => 'Product updated successfully',
+    ]);
+}
 
     public function destroy(Product $product)
     {
@@ -188,6 +261,20 @@ class ProductController extends Controller
         return redirect()->back()->with('toastr', [
             'status' => 'success',
             'message' => 'Product deleted successfully',
+        ]);
+    }
+
+    public function deleteImage($id)
+    {
+        $image = ProductImage::findOrFail($id);
+        $oldImagePath = public_path($image->image_path);
+        if (file_exists($oldImagePath)) {
+            unlink($oldImagePath);
+        }
+        $image->delete();
+        return redirect()->back()->with('toastr', [
+            'status' => 'success',
+            'message' => 'Image deleted successfully',
         ]);
     }
 }

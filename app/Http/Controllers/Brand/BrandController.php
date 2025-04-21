@@ -60,7 +60,11 @@ class BrandController extends Controller
     public function edit($id)
     {
         $brand = Brand::findOrFail($id);
-        return view('brand.editBrand')->with('brand', $brand);
+        return view('brand.editBrand')->with([
+            'brand' => $brand,
+            'title' => 'Edit Brand',
+            'heading' => 'Edit Brand',
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -93,14 +97,10 @@ class BrandController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
         $brand = Brand::findOrFail($id);
 
-        // Xoá ảnh cũ nếu có
         if ($brand->image && Storage::disk('public')->exists($brand->image)) {
             Storage::disk('public')->delete($brand->image);
         }

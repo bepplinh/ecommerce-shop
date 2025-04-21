@@ -11,6 +11,7 @@ use App\Http\Controllers\Product\SizeController;
 use App\Http\Controllers\auth\RegisterController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Category\CategoryController;
+use App\Http\Controllers\Client\ShopController;
 
 Route::get('/', function () {
     return view('client.home');
@@ -38,6 +39,8 @@ Route::group(['middleware' => 'auth'], function () {
         Route::resource('brands', BrandController::class);
         Route::resource('categorys', CategoryController::class);
 
+        Route::delete('deleteImage/{id}', [ProductController::class, 'deleteImage'])->name('products.deleteImage');
+
         Route::get('addSize', [SizeController::class, 'index'])->name('product.size');
         Route::post('addSize', [SizeController::class, 'store'])->name('product.addSize');
         Route::put('updateSize/{id}', [SizeController::class, 'update'])->name('product.updateSize');
@@ -56,7 +59,7 @@ Route::post('/register', [RegisterController::class, 'register'])->name('registe
 Route::get('login/google', [SocialController::class, 'redirectToGoogle'])->name('login.google');
 Route::get('login/google/callback', [SocialController::class, 'handleGoogleCallback']);
 
-Route::get('/client', function () {
-    return view('client.home');
-})->name('home');
+Route::get('/shop', [ShopController::class, 'index'])->name('shop');
+
+
 
