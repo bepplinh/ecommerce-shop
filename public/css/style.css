@@ -1,9 +1,9 @@
 /* Căn giữa nội dung */
-.container {
+/* .container {
     width: 90%;
     max-width: 1200px;
     margin: auto;
-}
+} */
 
 /* Dàn ngang sản phẩm với Flexbox */
 .product-grid {

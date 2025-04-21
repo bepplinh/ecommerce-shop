@@ -1,6 +1,6 @@
 @extends('layout.adminDashboard')
 @section('content')
-<div class="container-fluid mt-4">
+<div class="container mt-4">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center text-center">
             <h5 class="mb-0">Danh sách sản phẩm</h5>
@@ -118,28 +118,28 @@
                 </table>
             </div>
 
-            <div class="d-flex justify-content-end mt-3">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination">
-                        <li class="page-item">
-                            <a class="page-link" href="{{ $products->previousPageUrl() }}" aria-label="Previous">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                        </li>
-                        @foreach ($products->getUrlRange(1, $products->lastPage()) as $page => $url)
-                        <li class="page-item {{ $products->currentPage() == $page ? 'active' : '' }}">
-                            <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                        </li>
-                        @endforeach
-                        <li class="page-item">
-                            <a class="page-link" href="{{ $products->nextPageUrl() }}" aria-label="Next">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+                <div class="d-flex justify-content-end mt-3">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $products->previousPageUrl() }}" aria-label="Previous">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            @foreach ($products->getUrlRange(1, $products->lastPage()) as $page => $url)
+                                <li class="page-item {{ $products->currentPage() == $page ? 'active' : '' }}">
+                                    <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                                </li>
+                            @endforeach
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $products->nextPageUrl() }}" aria-label="Next">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
     </div>
-</div>
 @endsection

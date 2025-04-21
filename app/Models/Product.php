@@ -15,7 +15,6 @@ class Product extends Model
         'price',
         'category_id',
         'brand_id',
-        'image',
         'status',
     ];
 
@@ -28,9 +27,19 @@ class Product extends Model
     {
         return $this->belongsTo(Brand::class);
     }
-    
+
     public function sizes()
     {
         return $this->belongsToMany(Size::class)->withPivot('stock')->withTimestamps();
+    }
+
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class);
+    }
+
+    public function mainImage()
+    {
+        return $this->hasOne(ProductImage::class)->where('is_main', true);
     }
 }
